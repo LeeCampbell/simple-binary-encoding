@@ -1,7 +1,7 @@
 Simple Binary Encoder for .NET
 ==============================
 
-This directory contains the visual studio solution for the .NET version of SBE
+This directory contains the Visual Studio solution for the .NET version of SBE
 
 Build
 -----

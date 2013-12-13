@@ -3,6 +3,9 @@ using System.Runtime.InteropServices;
 
 namespace Adaptive.SimpleBinaryEncoding
 {
+    /// <summary>
+    /// Provides access to read and write simple data types to and from a byte array in the SBE format.
+    /// </summary>
     public sealed unsafe class DirectBuffer : IDisposable
     {
         private readonly byte[] _buffer;
@@ -12,6 +15,10 @@ namespace Adaptive.SimpleBinaryEncoding
         // assumes .NET runs only on little endian systems
         private const ByteOrder NativeByteOrder = ByteOrder.LittleEndian;
 
+        /// <summary>
+        /// Constructs a <see cref="DirectBuffer"/>
+        /// </summary>
+        /// <param name="byteArray">The byte array that will act as the backing buffer.</param>
         public DirectBuffer(byte[] byteArray)
         {
             if (byteArray == null) throw new ArgumentNullException("byteArray");
@@ -24,9 +31,9 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        /// Check that a given position is within the capacity of the buffer
+        /// Assert that a given position is within the capacity of the buffer.
         /// </summary>
-        /// <param name="position">position access is required to.</param>
+        /// <param name="position">The position (index) that access is required to.</param>
         public void CheckPosition(int position)
         {
             if (position >= _buffer.Length)
@@ -36,9 +43,9 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        ///  Get the value at a given index.
+        /// Gets the <see cref="byte"/> value at a given index.
         /// </summary>
-        /// <param name="index"> index in bytes from which to get.</param>
+        /// <param name="index">index in bytes from which to get.</param>
         /// <returns>the value at a given index.</returns>
         public byte CharGet(int index)
         {
@@ -46,7 +53,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        /// Put a value to a given index.
+        /// Writes a <see cref="byte"/> value to a given index.
         /// </summary>
         /// <param name="index">index in bytes for where to put.</param>
         /// <param name="value">value to be written</param>
@@ -56,7 +63,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        ///  Get the value at a given index.
+        /// Gets the <see cref="sbyte"/> value at a given index.
         /// </summary>
         /// <param name="index"> index in bytes from which to get.</param>
         /// <returns>the value at a given index.</returns>
@@ -66,7 +73,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        /// Put a value to a given index.
+        /// Writes a <see cref="sbyte"/> value to a given index.
         /// </summary>
         /// <param name="index">index in bytes for where to put.</param>
         /// <param name="value">value to be written</param>
@@ -76,7 +83,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        ///  Get the value at a given index.
+        /// Gets the <see cref="byte"/> value at a given index.
         /// </summary>
         /// <param name="index"> index in bytes from which to get.</param>
         /// <returns>the value at a given index.</returns>
@@ -86,7 +93,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        /// Put a value to a given index.
+        /// Writes a <see cref="byte"/> value to a given index.
         /// </summary>
         /// <param name="index">index in bytes for where to put.</param>
         /// <param name="value">value to be written</param>
@@ -98,7 +105,7 @@ namespace Adaptive.SimpleBinaryEncoding
         #region Big Endian
 
         /// <summary>
-        ///  Get the value at a given index.
+        /// Gets the <see cref="short"/> value at a given index.
         /// </summary>
         /// <param name="index"> index in bytes from which to get.</param>
         /// <returns>the value at a given index.</returns>
@@ -110,7 +117,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        /// Put a value to a given index.
+        /// Writes a <see cref="short"/> value to a given index.
         /// </summary>
         /// <param name="index">index in bytes for where to put.</param>
         /// <param name="value">value to be written</param>
@@ -122,7 +129,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        ///  Get the value at a given index.
+        /// Gets the <see cref="int"/> value at a given index.
         /// </summary>
         /// <param name="index"> index in bytes from which to get.</param>
         /// <returns>the value at a given index.</returns>
@@ -135,7 +142,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        /// Put a value to a given index.
+        /// Writes a <see cref="int"/> value to a given index.
         /// </summary>
         /// <param name="index">index in bytes for where to put.</param>
         /// <param name="value">value to be written</param>
@@ -147,7 +154,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        ///  Get the value at a given index.
+        /// Gets the <see cref="long"/> value at a given index.
         /// </summary>
         /// <param name="index"> index in bytes from which to get.</param>
         /// <returns>the value at a given index.</returns>
@@ -160,7 +167,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        /// Put a value to a given index.
+        /// Writes a <see cref="long"/> value to a given index.
         /// </summary>
         /// <param name="index">index in bytes for where to put.</param>
         /// <param name="value">value to be written</param>
@@ -172,7 +179,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        ///  Get the value at a given index.
+        /// Gets the <see cref="ushort"/> value at a given index.
         /// </summary>
         /// <param name="index"> index in bytes from which to get.</param>
         /// <returns>the value at a given index.</returns>
@@ -185,7 +192,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        /// Put a value to a given index.
+        /// Writes a <see cref="ushort"/> value to a given index.
         /// </summary>
         /// <param name="index">index in bytes for where to put.</param>
         /// <param name="value">value to be written</param>
@@ -197,7 +204,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        ///  Get the value at a given index.
+        /// Gets the <see cref="uint"/> value at a given index.
         /// </summary>
         /// <param name="index"> index in bytes from which to get.</param>
         /// <returns>the value at a given index.</returns>
@@ -210,7 +217,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        /// Put a value to a given index.
+        /// Writes a <see cref="uint"/> value to a given index.
         /// </summary>
         /// <param name="index">index in bytes for where to put.</param>
         /// <param name="value">value to be written</param>
@@ -222,7 +229,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        ///  Get the value at a given index.
+        /// Gets the <see cref="ulong"/> value at a given index.
         /// </summary>
         /// <param name="index"> index in bytes from which to get.</param>
         /// <returns>the value at a given index.</returns>
@@ -235,7 +242,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        /// Put a value to a given index.
+        /// Writes a <see cref="ulong"/> value to a given index.
         /// </summary>
         /// <param name="index">index in bytes for where to put.</param>
         /// <param name="value">value to be written</param>
@@ -247,7 +254,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        ///  Get the value at a given index.
+        /// Gets the <see cref="float"/> value at a given index.
         /// </summary>
         /// <param name="index"> index in bytes from which to get.</param>
         /// <returns>the value at a given index.</returns>
@@ -260,7 +267,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        /// Put a value to a given index.
+        /// Writes a <see cref="float"/> value to a given index.
         /// </summary>
         /// <param name="index">index in bytes for where to put.</param>
         /// <param name="value">value to be written</param>
@@ -272,7 +279,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        ///  Get the value at a given index.
+        /// Gets the <see cref="double"/> value at a given index.
         /// </summary>
         /// <param name="index"> index in bytes from which to get.</param>
         /// <returns>the value at a given index.</returns>
@@ -285,7 +292,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        /// Put a value to a given index.
+        /// Writes a <see cref="double"/> value to a given index.
         /// </summary>
         /// <param name="index">index in bytes for where to put.</param>
         /// <param name="value">value to be written</param>
@@ -301,7 +308,7 @@ namespace Adaptive.SimpleBinaryEncoding
         #region Little Endian
 
         /// <summary>
-        ///  Get the value at a given index.
+        /// Gets the <see cref="short"/> value at a given index.
         /// </summary>
         /// <param name="index"> index in bytes from which to get.</param>
         /// <returns>the value at a given index.</returns>
@@ -311,7 +318,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        /// Put a value to a given index.
+        /// Writes a <see cref="short"/> value to a given index.
         /// </summary>
         /// <param name="index">index in bytes for where to put.</param>
         /// <param name="value">value to be written</param>
@@ -321,7 +328,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        ///  Get the value at a given index.
+        /// Gets the <see cref="int"/> value at a given index.
         /// </summary>
         /// <param name="index"> index in bytes from which to get.</param>
         /// <returns>the value at a given index.</returns>
@@ -331,7 +338,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        /// Put a value to a given index.
+        /// Writes a <see cref="int"/> value to a given index.
         /// </summary>
         /// <param name="index">index in bytes for where to put.</param>
         /// <param name="value">value to be written</param>
@@ -341,7 +348,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        ///  Get the value at a given index.
+        /// Gets the <see cref="long"/> value at a given index.
         /// </summary>
         /// <param name="index"> index in bytes from which to get.</param>
         /// <returns>the value at a given index.</returns>
@@ -351,7 +358,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        /// Put a value to a given index.
+        /// Writes a <see cref="long"/> value to a given index.
         /// </summary>
         /// <param name="index">index in bytes for where to put.</param>
         /// <param name="value">value to be written</param>
@@ -361,7 +368,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        ///  Get the value at a given index.
+        /// Gets the <see cref="ushort"/> value at a given index.
         /// </summary>
         /// <param name="index"> index in bytes from which to get.</param>
         /// <returns>the value at a given index.</returns>
@@ -371,7 +378,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        /// Put a value to a given index.
+        /// Writes a <see cref="ushort"/> value to a given index.
         /// </summary>
         /// <param name="index">index in bytes for where to put.</param>
         /// <param name="value">value to be written</param>
@@ -381,7 +388,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        ///  Get the value at a given index.
+        /// Gets the <see cref="uint"/> value at a given index.
         /// </summary>
         /// <param name="index"> index in bytes from which to get.</param>
         /// <returns>the value at a given index.</returns>
@@ -391,7 +398,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        /// Put a value to a given index.
+        /// Writes a <see cref="uint"/> value to a given index.
         /// </summary>
         /// <param name="index">index in bytes for where to put.</param>
         /// <param name="value">value to be written</param>
@@ -401,7 +408,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        ///  Get the value at a given index.
+        /// Gets the <see cref="ulong"/> value at a given index.
         /// </summary>
         /// <param name="index"> index in bytes from which to get.</param>
         /// <returns>the value at a given index.</returns>
@@ -411,7 +418,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        /// Put a value to a given index.
+        /// Writes a <see cref="ulong"/> value to a given index.
         /// </summary>
         /// <param name="index">index in bytes for where to put.</param>
         /// <param name="value">value to be written</param>
@@ -421,7 +428,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        ///  Get the value at a given index.
+        /// Gets the <see cref="float"/> value at a given index.
         /// </summary>
         /// <param name="index"> index in bytes from which to get.</param>
         /// <returns>the value at a given index.</returns>
@@ -431,7 +438,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        /// Put a value to a given index.
+        /// Writes a <see cref="float"/> value to a given index.
         /// </summary>
         /// <param name="index">index in bytes for where to put.</param>
         /// <param name="value">value to be written</param>
@@ -441,7 +448,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        ///  Get the value at a given index.
+        /// Gets the <see cref="double"/> value at a given index.
         /// </summary>
         /// <param name="index"> index in bytes from which to get.</param>
         /// <returns>the value at a given index.</returns>
@@ -451,7 +458,7 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        /// Put a value to a given index.
+        /// Writes a <see cref="double"/> value to a given index.
         /// </summary>
         /// <param name="index">index in bytes for where to put.</param>
         /// <param name="value">value to be written</param>
@@ -463,7 +470,7 @@ namespace Adaptive.SimpleBinaryEncoding
         #endregion
 
         /// <summary>
-        ///     Get bytes from the underlying buffer into a supplied byte array.
+        /// Copies a range of bytes from the underlying into a supplied byte array.
         /// </summary>
         /// <param name="index">index  in the underlying buffer to start from.</param>
         /// <param name="destination">array into which the bytes will be copied.</param>
@@ -478,10 +485,10 @@ namespace Adaptive.SimpleBinaryEncoding
         }
 
         /// <summary>
-        ///     Put an array into the underlying buffer.
+        /// Writes a byte array into the underlying buffer.
         /// </summary>
         /// <param name="index">index  in the underlying buffer to start from.</param>
-        /// <param name="src">src    to be copied to the underlying buffer.</param>
+        /// <param name="src">source byte array to be copied to the underlying buffer.</param>
         /// <param name="offset">offset in the supplied buffer to begin the copy.</param>
         /// <param name="length">length of the supplied buffer to copy.</param>
         /// <returns>count of bytes copied.</returns>
@@ -493,6 +500,11 @@ namespace Adaptive.SimpleBinaryEncoding
             return count;
         }
 
+
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
+        /// <filterpriority>2</filterpriority>
         public void Dispose()
         {
             Dispose(true);
