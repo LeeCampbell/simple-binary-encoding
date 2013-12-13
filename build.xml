@@ -63,6 +63,9 @@
         <mkdir dir="${dir.reports.checkstyle}"/>
         <mkdir dir="${dir.main.cpp.build}"/>
         <mkdir dir="${dir.gtest.build}"/>
+        <condition property="windows">
+            <os family="windows"/>
+        </condition>
     </target>
 
     <target name="checkstyle" depends="init">
@@ -179,6 +182,7 @@
             <fileset dir="${dir.docs.cpp}"/>
         </zip>
     </target>
+  
 
     <target name="all" depends="clean, checkstyle, build, test, javadoc, dist"/>
 
@@ -239,6 +243,7 @@
             <sysproperty key="sbe.output.dir" value="${dir.gen.java}"/>
             <sysproperty key="sbe.target.language" value="Java"/>
             <arg value="${dir.examples.resources}/TestSchema.xml"/>
+            <arg value="${dir.examples.resources}/TestExtensionSchema.xml"/>
         </java>
         <javac srcdir="${dir.gen.java}" destdir="${dir.examples.build}" includeAntRuntime="false" debug="true">
             <classpath refid="examples.classpath"/>
@@ -249,7 +254,9 @@
         <java classname="uk.co.real_logic.sbe.examples.SbeExample">
             <classpath refid="examples.classpath"/>
         </java>
-
+        <java classname="uk.co.real_logic.sbe.examples.SbeExtensionExample">
+            <classpath refid="examples.classpath"/>
+        </java>
     </target>
 
     <target name="cpp:examples:gen" depends="dist" description="Generate and run C++ generated code example">
@@ -267,44 +274,60 @@
             <includepath path="${dir.examples.cpp99.src}"/>
             <includepath path="${dir.gen.cpp99}"/>
             <includepath path="${dir.examples.cpp99.include}"/>
-            <compilerarg value="-std=c++98"/>
-            <libset libs="stdc++"/>
+            <compilerarg value="-std=c++98" unless="windows"/>
+            <compilerarg value="/wd4514" if="windows"/>
+            <compiler name="msvc" if="windows"/>
+            <linker name="msvc" if="windows"/>
+            <defineset if="windows">
+                <define name="WIN32" value="1"/>
+            </defineset>
+            <syslibset libs="stdc++"/>
             <fileset dir="${dir.examples.cpp99.src}" includes="SbeExample.cpp"/>
         </cc>
         <exec executable="${exec.example.cpp99}" failonerror="true"/>
     </target>
 
     <target name="cpp:examples:otf" depends="dist, examples:java, cpp:compile" description="Generate and run OTF C++ example">
-        <mkdir dir="${dir.gen.cpp99}"/>
-        <cc outtype="executable"
-            debug="true"
-            subsystem="console"
-            outfile="${exec.example.otf.cpp99}">
-            <includepath path="${dir.examples.cpp99.src}"/>
-            <includepath path="${dir.gen.cpp99}"/>
-            <includepath path="${dir.examples.cpp99.include}"/>
-            <compilerarg value="-std=c++98"/>
-            <compilerarg value="-Wall"/>
-            <libset libs="stdc++"/>
-            <fileset dir="${dir.main.cpp.build}" includes="*.o"/>
-            <fileset dir="${dir.examples.cpp99.src}" includes="SbeOtfDecoder.cpp"/>
-        </cc>
-        <java classname="uk.co.real_logic.sbe.SbeTool">
-            <classpath refid="examples.classpath"/>
-            <sysproperty key="sbe.output.dir" value="${dir.gen.cpp99}"/>
-            <sysproperty key="sbe.should.generate" value="false"/>
-            <sysproperty key="sbe.ir.filename" value="Car.sbeir"/>
-            <arg value="${dir.examples.resources}/TestSchema.xml"/>
-        </java>
-        <java classname="uk.co.real_logic.sbe.examples.SbeExample">
-            <classpath refid="examples.classpath"/>
-            <sysproperty key="sbe.encoding.filename" value="${dir.gen.cpp99}/Car.data"/>
-        </java>
-        <exec executable="${exec.example.otf.cpp99}" failonerror="true">
-            <arg value="${dir.gen.cpp99}/Car.sbeir"/>
-            <arg value="${dir.gen.cpp99}/Car.data"/>
-        </exec>
+        <sequential>
+            <mkdir dir="${dir.gen.cpp99}"/>
+            <cc outtype="executable"
+                debug="true"
+                subsystem="console"
+                outfile="${exec.example.otf.cpp99}">
+                <includepath path="${dir.examples.cpp99.src}"/>
+                <includepath path="${dir.gen.cpp99}"/>
+                <includepath path="${dir.examples.cpp99.include}"/>
+                <compilerarg value="-std=c++98" unless="windows"/>
+                <compilerarg value="-Wall" unless="windows"/>
+                <compilerarg value="/wd4514" if="windows"/>
+                <compiler name="msvc" if="windows"/>
+                <linker name="msvc" if="windows"/>
+                <defineset if="windows">
+                    <define name="WIN32" value="1"/>
+                </defineset>
+                <syslibset libs="stdc++"/>
+                <fileset dir="${dir.main.cpp.build}" includes="*.o*"/>
+                <fileset dir="${dir.examples.cpp99.src}" includes="SbeOtfDecoder.cpp"/>
+            </cc>
+            <java classname="uk.co.real_logic.sbe.SbeTool">
+                <classpath refid="examples.classpath"/>
+                <sysproperty key="sbe.output.dir" value="${dir.gen.cpp99}"/>
+                <sysproperty key="sbe.should.generate" value="false"/>
+                <sysproperty key="sbe.ir.filename" value="Car.sbeir"/>
+                <arg value="${dir.examples.resources}/TestSchema.xml"/>
+            </java>
+            <java classname="uk.co.real_logic.sbe.examples.SbeExample">
+                <classpath refid="examples.classpath"/>
+                <sysproperty key="sbe.encoding.filename" value="${dir.gen.cpp99}/Car.data"/>
+            </java>
+            <exec executable="${exec.example.otf.cpp99}" failonerror="true">
+                <arg value="${dir.gen.cpp99}/Car.sbeir"/>
+                <arg value="${dir.gen.cpp99}/Car.data"/>
+            </exec>
+        </sequential>
     </target>
+
+    <target name="examples:cpp" depends="cpp:examples:gen, cpp:examples:otf" description="Compile and run C++99 examples"/>
 
     <target name="update:gtest" depends="">
         <sequential>
@@ -335,10 +358,15 @@
             multithreaded="true"
             exceptions="true"
             objdir="${dir.gtest.build}">
-            <compilerarg value="-Wall"/>
-            <compilerarg value="-pthread"/>
+            <compilerarg value="-Wall" unless="windows"/>
+            <compilerarg value="-pthread" unless="windows"/>
             <includepath path="${dir.gtest.include}"/>
             <includepath path="${dir.gtest.src}"/>
+            <compilerarg value="/wd4514" if="windows"/>
+            <compiler name="msvc" if="windows"/>
+            <defineset if="windows">
+                <define name="WIN32" value="1"/>
+            </defineset>
             <fileset dir="${dir.gtest.src}">
                 <include name="src/gtest-all.cc"/>
                 <include name="src/gtest_main.cc"/>
@@ -352,8 +380,13 @@
             subsystem="console"
             objdir="${dir.main.cpp.build}">
             <includepath path="${dir.main.cpp.src}"/>
-            <compilerarg value="-std=c++98"/>
-            <compilerarg value="-Wall"/>
+            <compilerarg value="-std=c++98" unless="windows"/>
+            <compilerarg value="-Wall" unless="windows"/>
+            <compilerarg value="/wd4514" if="windows"/>
+            <compiler name="msvc" if="windows"/>
+            <defineset if="windows">
+                <define name="WIN32" value="1"/>
+            </defineset>
             <fileset dir="${dir.main.cpp.src}" includes="**/*.cpp"/>
         </cc>
     </target>
@@ -365,13 +398,19 @@
             debug="true"
             multithreaded="true"
             outfile="${exec.test.cpp}">
-            <compilerarg value="-Wall"/>
-            <compilerarg value="-pthread"/>
+            <compilerarg value="-Wall" unless="windows"/>
+            <compilerarg value="-pthread" unless="windows"/>
             <includepath path="${dir.gtest.include}"/>
             <includepath path="${dir.main.cpp.src}"/>
             <includepath path="${dir.test.cpp.include}"/>
-            <fileset dir="${dir.main.cpp.build}" includes="*.o"/>
-            <fileset dir="${dir.gtest.build}" includes="*.o"/>
+            <compilerarg value="/wd4514" if="windows"/>
+            <compiler name="msvc" if="windows"/>
+            <linker name="msvc" if="windows"/>
+            <defineset if="windows">
+                <define name="WIN32" value="1"/>
+            </defineset>
+            <fileset dir="${dir.main.cpp.build}" includes="*.o*"/>
+            <fileset dir="${dir.gtest.build}" includes="*.o*"/>
             <fileset dir="${dir.test.cpp.src}" includes="**/*Test.cpp"/>
             <syslibset libs="pthread, stdc++"/>
         </cc>
@@ -382,4 +421,55 @@
 
     <target name="cpp" depends="cpp:test, cpp:doc, cpp:dist"/>
 
+
+    <!-- C# targets (Windows only) -->
+
+    <property name="dir.gen.csharp" value="target/gen/csharp"/>
+    <property name="dir.main.csharp.output" value="target/main/csharp/bin/Release"/>
+
+    <target name="csharp:examples" depends="dist" description="Generate C# files for the car example">
+        <mkdir dir="${dir.gen.csharp}"/>
+        <java classname="uk.co.real_logic.sbe.SbeTool">
+            <classpath refid="examples.classpath"/>
+            <sysproperty key="sbe.output.dir" value="${dir.gen.csharp}"/>
+            <sysproperty key="sbe.target.language" value="CSharp"/>
+            <arg value="${dir.examples.resources}/TestSchema.xml"/>
+        </java>
+
+        <copy todir="examples/csharp/">
+            <fileset dir="${dir.gen.csharp}"/>
+        </copy>
+    </target>
+
+    <target name="csharp:build" depends="init, csharp:examples" description="Build .NET solution and run unit tests">
+        <echo message="Calling MSBuild with version: ${build.version}"  />
+        <exec executable="C:\Windows\Microsoft.NET\Framework\v4.0.30319\msbuild.exe">
+            <arg value="/p:BUILD_NUMBER=${build.version}"/>
+            <arg value="vs2013/build.xml"/>
+        </exec>
+    </target>
+
+    <target name="csharp:dist" depends="csharp:build" description="Create SBE NuGet pacakge">
+        <delete dir="${dir.dist}/csharp/"/>
+        <copy todir="${dir.dist}/csharp/lib/net40">
+            <fileset dir="${dir.main.csharp.output}" />
+        </copy>
+        <copy file="${dir.dist}/${module.name}-${build.version}-${DSTAMP}.jar" tofile="${dir.dist}/csharp/sbetool/SBETool.jar" />
+        <copy file="vs2013/.nuget/GenerateSampleCode.bat" todir="${dir.dist}/csharp/sample" />
+        <copy file="vs2013/.nuget/readme.txt" todir="${dir.dist}/csharp" />
+        <copy file="examples/resources/TestSchema.xml"  todir="${dir.dist}/csharp/sample" />
+        <copy file="examples/csharp/SbeProgram.cs" todir="${dir.dist}/csharp/sample" />
+
+        <exec executable="C:\Windows\Microsoft.NET\Framework\v4.0.30319\msbuild.exe">
+            <arg value="/t:Package"/>
+            <arg value="vs2013/build.xml"/>
+        </exec>
+    </target>
+
+    <target name="csharp:publish" depends="csharp:dist" description="Publish SBE NuGet package">
+        <exec executable="C:\Windows\Microsoft.NET\Framework\v4.0.30319\msbuild.exe">
+            <arg value="/t:Publish"/>
+            <arg value="vs2013/build.xml"/>
+        </exec>
+    </target>
 </project>

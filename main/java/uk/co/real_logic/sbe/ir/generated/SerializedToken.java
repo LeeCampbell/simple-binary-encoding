@@ -71,13 +71,28 @@ public class SerializedToken implements MessageFlyweight
 
     public void position(final int position)
     {
-        CodecUtil.checkPosition(position, buffer.capacity());
+        buffer.checkPosition(position);
         this.position = position;
     }
 
     public static int tokenOffsetSchemaId()
     {
         return 11;
+    }
+
+    public static int tokenOffsetNullVal()
+    {
+        return -2147483648;
+    }
+
+    public static int tokenOffsetMinVal()
+    {
+        return -2147483647;
+    }
+
+    public static int tokenOffsetMaxVal()
+    {
+        return 2147483647;
     }
 
     public int tokenOffset()
@@ -96,6 +111,21 @@ public class SerializedToken implements MessageFlyweight
         return 12;
     }
 
+    public static int tokenSizeNullVal()
+    {
+        return -2147483648;
+    }
+
+    public static int tokenSizeMinVal()
+    {
+        return -2147483647;
+    }
+
+    public static int tokenSizeMaxVal()
+    {
+        return 2147483647;
+    }
+
     public int tokenSize()
     {
         return CodecUtil.int32Get(buffer, offset + 4, java.nio.ByteOrder.LITTLE_ENDIAN);
@@ -112,6 +142,21 @@ public class SerializedToken implements MessageFlyweight
         return 13;
     }
 
+    public static int schemaIDNullVal()
+    {
+        return -2147483648;
+    }
+
+    public static int schemaIDMinVal()
+    {
+        return -2147483647;
+    }
+
+    public static int schemaIDMaxVal()
+    {
+        return 2147483647;
+    }
+
     public int schemaID()
     {
         return CodecUtil.int32Get(buffer, offset + 8, java.nio.ByteOrder.LITTLE_ENDIAN);
@@ -126,6 +171,21 @@ public class SerializedToken implements MessageFlyweight
     public static int tokenVersionSchemaId()
     {
         return 17;
+    }
+
+    public static int tokenVersionNullVal()
+    {
+        return -2147483648;
+    }
+
+    public static int tokenVersionMinVal()
+    {
+        return -2147483647;
+    }
+
+    public static int tokenVersionMaxVal()
+    {
+        return 2147483647;
     }
 
     public int tokenVersion()

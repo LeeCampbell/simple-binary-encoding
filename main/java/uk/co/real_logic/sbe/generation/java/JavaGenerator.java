@@ -195,9 +195,9 @@ public class JavaGenerator implements CodeGenerator
 
         sb.append(String.format(
             "\n" +
-            indent + "public static class %s implements GroupFlyweight<%s>\n" +
+            indent + "public static class %1$s implements GroupFlyweight<%1$s>\n" +
             indent + "{\n" +
-            indent + "    private final %s dimensions = new %s();\n" +
+            indent + "    private final %2$s dimensions = new %2$s();\n" +
             indent + "    private MessageFlyweight parentMessage;\n" +
             indent + "    private DirectBuffer buffer;\n" +
             indent + "    private int blockLength;\n" +
@@ -206,8 +206,6 @@ public class JavaGenerator implements CodeGenerator
             indent + "    private int index;\n" +
             indent + "    private int offset;\n\n",
             formatClassName(groupName),
-            formatClassName(groupName),
-            dimensionsClassName,
             dimensionsClassName
         ));
 
@@ -315,27 +313,23 @@ public class JavaGenerator implements CodeGenerator
 
         sb.append(String.format(
             "\n" +
-            indent + "    public %s %s()\n" +
+            indent + "    public %1$s %2$s()\n" +
             indent + "    {\n" +
-            indent + "        %s.wrapForDecode(parentMessage, buffer, actingVersion);\n" +
-            indent + "        return %s;\n" +
+            indent + "        %2$s.wrapForDecode(parentMessage, buffer, actingVersion);\n" +
+            indent + "        return %2$s;\n" +
             indent + "    }\n",
             className,
-            propertyName,
-            propertyName,
             propertyName
         ));
 
         sb.append(String.format(
             "\n" +
-            indent + "    public %s %sCount(final int count)\n" +
+            indent + "    public %1$s %2$sCount(final int count)\n" +
             indent + "    {\n" +
-            indent + "        %s.wrapForEncode(parentMessage, buffer, count);\n" +
-            indent + "        return %s;\n" +
+            indent + "        %2$s.wrapForEncode(parentMessage, buffer, count);\n" +
+            indent + "        return %2$s;\n" +
             indent + "    }\n",
             className,
-            propertyName,
-            propertyName,
             propertyName
         ));
 
@@ -417,7 +411,7 @@ public class JavaGenerator implements CodeGenerator
             out.append(generateFileHeader(ir.packageName()));
             out.append(generateClassDeclaration(bitSetName, FixedFlyweight.class.getSimpleName()));
             out.append(generateFixedFlyweightCode(bitSetName, tokens.get(0).size()));
-
+            out.append(generateChoiceClear(bitSetName, tokens.get(0)));
             out.append(generateChoices(bitSetName, tokens.subList(1, tokens.size() - 1)));
 
             out.append("}\n");
@@ -456,6 +450,31 @@ public class JavaGenerator implements CodeGenerator
 
             out.append("}\n");
         }
+    }
+
+    private CharSequence generateChoiceClear(final String bitSetClassName, final Token token)
+    {
+        final StringBuilder sb = new StringBuilder();
+
+        final String typePrefix = token.encoding().primitiveType().primitiveName();
+        final String literalValue = generateLiteral(token.encoding().primitiveType(), "0");
+        final ByteOrder byteOrder = token.encoding().byteOrder();
+        final String byteOrderStr = token.encoding().primitiveType().size() == 1 ? "" : ", java.nio.ByteOrder." + byteOrder;
+
+        sb.append(String.format(
+            "\n" +
+                "    public %s clear()\n" +
+                "    {\n" +
+                "        CodecUtil.%sPut(buffer, offset, %s%s);\n" +
+                "        return this;\n" +
+                "    }\n",
+            bitSetClassName,
+            typePrefix,
+            literalValue,
+            byteOrderStr
+        ));
+
+        return sb;
     }
 
     private CharSequence generateChoices(final String bitSetClassName, final List<Token> tokens)
@@ -509,7 +528,10 @@ public class JavaGenerator implements CodeGenerator
             sb.append("    ").append(token.name()).append('(').append(constVal).append("),\n");
         }
 
-        sb.setLength(sb.length() - 2);
+        final Token token = tokens.get(0);
+        final CharSequence nullVal = generateLiteral(token.encoding().primitiveType(), token.encoding().applicableNullVal().toString());
+        sb.append("    ").append("NULL_VAL").append('(').append(nullVal).append(')');
+
         sb.append(";\n\n");
 
         return sb;
@@ -520,19 +542,17 @@ public class JavaGenerator implements CodeGenerator
         final String javaEncodingType = javaTypeName(token.encoding().primitiveType());
 
         return String.format(
-            "    private final %s value;\n\n"+
-            "    %s(final %s value)\n" +
+            "    private final %1$s value;\n\n"+
+            "    %2$s(final %1$s value)\n" +
             "    {\n" +
             "        this.value = value;\n" +
             "    }\n\n" +
-            "    public %s value()\n" +
+            "    public %1$s value()\n" +
             "    {\n" +
             "        return value;\n" +
             "    }\n\n",
             javaEncodingType,
-            enumName,
-            javaEncodingType,
-            javaEncodingType
+            enumName
         );
     }
 
@@ -558,11 +578,13 @@ public class JavaGenerator implements CodeGenerator
             );
         }
 
-        sb.append(
+        sb.append(String.format(
+            "            case %s: return NULL_VAL;\n" +
             "        }\n\n" +
             "        throw new IllegalArgumentException(\"Unknown value: \" + value);\n" +
-            "    }\n"
-        );
+            "    }\n",
+            tokens.get(0).encoding().applicableNullVal().toString()
+        ));
 
         return sb;
     }
@@ -614,14 +636,20 @@ public class JavaGenerator implements CodeGenerator
                                                    final Token token,
                                                    final String indent)
     {
+        final StringBuilder sb = new StringBuilder();
+
+        sb.append(generatePrimitiveFieldMetaData(propertyName, token, indent));
+
         if (Encoding.Presence.CONSTANT == token.encoding().presence())
         {
-            return generateConstPropertyMethods(propertyName, token, indent);
+            sb.append(generateConstPropertyMethods(propertyName, token, indent));
         }
         else
         {
-            return generatePrimitivePropertyMethods(containingClassName, propertyName, token, indent);
+            sb.append(generatePrimitivePropertyMethods(containingClassName, propertyName, token, indent));
         }
+
+        return sb;
     }
 
     private CharSequence generatePrimitivePropertyMethods(final String containingClassName,
@@ -641,6 +669,49 @@ public class JavaGenerator implements CodeGenerator
         }
 
         return "";
+    }
+
+    private CharSequence generatePrimitiveFieldMetaData(final String propertyName, final Token token, final String indent)
+    {
+        final StringBuilder sb = new StringBuilder();
+
+        final PrimitiveType primitiveType = token.encoding().primitiveType();
+        final String javaTypeName = javaTypeName(primitiveType);
+
+        sb.append(String.format(
+            "\n" +
+            indent + "    public static %s %sNullVal()\n" +
+            indent + "    {\n" +
+            indent + "        return %s;\n" +
+            indent + "    }\n",
+            javaTypeName,
+            propertyName,
+            generateLiteral(primitiveType, token.encoding().applicableNullVal().toString())
+        ));
+
+        sb.append(String.format(
+            "\n" +
+            indent + "    public static %s %sMinVal()\n" +
+            indent + "    {\n" +
+            indent + "        return %s;\n" +
+            indent + "    }\n",
+            javaTypeName,
+            propertyName,
+            generateLiteral(primitiveType, token.encoding().applicableMinVal().toString())
+        ));
+
+        sb.append(String.format(
+            "\n" +
+            indent + "    public static %s %sMaxVal()\n" +
+            indent + "    {\n" +
+            indent + "        return %s;\n" +
+            indent + "    }\n",
+            javaTypeName,
+            propertyName,
+            generateLiteral(primitiveType, token.encoding().applicableMaxVal().toString())
+        ));
+
+        return sb;
     }
 
     private CharSequence generateSingleValueProperty(final String containingClassName,
@@ -701,7 +772,7 @@ public class JavaGenerator implements CodeGenerator
             indent + "            return %s;\n" +
             indent + "        }\n\n",
             Integer.valueOf(sinceVersion),
-            sinceVersion > 0 ? generateLiteral(encoding.primitiveType(), encoding.nullVal().toString()) : "(byte)0"
+            generateLiteral(encoding.primitiveType(), encoding.applicableNullVal().toString())
         );
     }
 
@@ -876,8 +947,8 @@ public class JavaGenerator implements CodeGenerator
         final StringBuilder sb = new StringBuilder();
 
         final String javaTypeName = javaTypeName(token.encoding().primitiveType());
-        final byte[] constantValue = token.encoding().constVal().byteArrayValue();
-        final CharSequence values = generateByteLiteralList(token.encoding().constVal().byteArrayValue());
+        final byte[] constantValue = token.encoding().constVal().byteArrayValue(token.encoding().primitiveType());
+        final CharSequence values = generateByteLiteralList(token.encoding().constVal().byteArrayValue(token.encoding().primitiveType()));
 
         sb.append(String.format(
             "\n" +
@@ -1024,7 +1095,7 @@ public class JavaGenerator implements CodeGenerator
             "    }\n\n" +
             "    public void position(final int position)\n" +
             "    {\n" +
-            "        CodecUtil.checkPosition(position, buffer.capacity());\n" +
+            "        buffer.checkPosition(position);\n" +
             "        this.position = position;\n" +
             "    }\n",
             templateIdType,
@@ -1221,13 +1292,23 @@ public class JavaGenerator implements CodeGenerator
                 break;
 
             case UINT16:
-            case UINT32:
             case INT32:
                 literal = value;
                 break;
 
+            case UINT32:
+                literal = value + "L";
+                break;
+
             case FLOAT:
-                literal = value + "f";
+                if (value.endsWith("NaN"))
+                {
+                    literal = "Float.NaN";
+                }
+                else
+                {
+                    literal = value + "f";
+                }
                 break;
 
             case UINT64:
@@ -1236,7 +1317,14 @@ public class JavaGenerator implements CodeGenerator
                 break;
 
             case DOUBLE:
-                literal = value + "d";
+                if (value.endsWith("NaN"))
+                {
+                    literal = "Double.NaN";
+                }
+                else
+                {
+                    literal = value + "d";
+                }
         }
 
         return literal;

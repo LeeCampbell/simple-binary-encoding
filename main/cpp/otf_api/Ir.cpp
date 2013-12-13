@@ -37,11 +37,13 @@ struct Ir::Impl
     uint32_t serializedTokenSize;
 };
 
+#if !defined(WIN32)
 const int Ir::INVALID_ID;
 const uint32_t Ir::VARIABLE_SIZE;
+#endif /* WIN32 */
 
-Ir::Ir(const char *buffer, const int len) :
-    buffer_(buffer), len_(len)
+Ir::Ir(const char *buffer, const int len, const int64_t templateId, const int64_t templateVersion) :
+    buffer_(buffer), len_(len), templateId_(templateId), templateVersion_(templateVersion)
 {
     impl_ = new Ir::Impl;
     begin();
@@ -185,7 +187,7 @@ uint64_t Ir::choiceValue() const
     }
 }
 
-uint8_t Ir::nameLen() const
+int64_t Ir::nameLen() const
 {
     return impl_->nameLength;
 }
@@ -195,7 +197,7 @@ std::string Ir::name() const
     return std::string(impl_->name, nameLen());
 }
 
-uint64_t Ir::constLen() const
+int64_t Ir::constLen() const
 {
     return impl_->constValLength;
 }

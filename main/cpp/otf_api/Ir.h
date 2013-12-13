@@ -128,15 +128,16 @@ public:
          * a given message template ID.
          *
          * \param templateId of the message
+         * \param version of the message
          * \return Ir for the message
          */
-        virtual Ir *irForTemplateId(const int templateId) = 0;
+        virtual Ir *irForTemplateId(const int templateId, const int version) = 0;
     };
 
     // constructors and destructors
 
     /// Construct an Ir from a buffer with serialized tokens of len total size.
-    Ir(const char *buffer = NULL, const int len = 0);
+    Ir(const char *buffer = NULL, const int len = 0, const int64_t templateId = -1, const int64_t templateVersion = -1);
 
     virtual ~Ir()
     {
@@ -145,7 +146,17 @@ public:
             delete[] buffer_;
             buffer_ = NULL;
         }
-    };
+    }
+
+    int64_t templateId(void) const
+    {
+        return templateId_;
+    }
+
+    int64_t templateVersion(void) const
+    {
+        return templateVersion_;
+    }
 
     // iterator methods for IrTokens
 
@@ -175,11 +186,11 @@ public:
     /// Return the value of the current tokens bit set Ir::CHOICE value
     uint64_t choiceValue() const;
     /// Return the length of the name of the current token
-    uint8_t nameLen() const;
+    int64_t nameLen() const;
     /// Return the name of the current token
     std::string name() const;
     /// Return the length of the current tokens constant value in bytes
-    uint64_t constLen() const;
+    int64_t constLen() const;
     /// Retrieve the current tokens constant value or NULL if not present
     const char *constVal() const;
 
@@ -200,7 +211,7 @@ public:
                   int constValLength = 0);
 
     // used to retrieve what would be the nominal size of a single element of a primitive type
-    static unsigned int size(TokenPrimitiveType type)
+    static int64_t size(TokenPrimitiveType type)
     {
         switch (type)
         {
@@ -236,6 +247,8 @@ private:
     const char *buffer_;
     int len_;
     int cursorOffset_;
+    int64_t templateId_;
+    int64_t templateVersion_;
 
     struct Impl;
 

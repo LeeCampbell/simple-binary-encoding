@@ -13,6 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#if defined(WIN32)
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#else
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
@@ -20,6 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#endif /* WIN32 */
 
 #include <iostream>
 #include <string>
@@ -37,12 +45,12 @@ public:
     // save a reference to the Listener so we can print out the offset
     IrRepo(Listener &listener) : listener_(listener) {};
 
-    virtual Ir *irForTemplateId(const int templateId)
+    virtual Ir *irForTemplateId(const int templateId, const int templateVersion)
     {
-        std::cout << "Message lookup id=" << templateId << " offset " << listener_.bufferOffset() << std::endl;
+        std::cout << "Message lookup id=" << templateId << " version " << templateVersion << " offset " << listener_.bufferOffset() << std::endl;
 
-        // lookup in IrCollection the IR for the template ID
-        return (Ir *)IrCollection::message(templateId);
+        // lookup in IrCollection the IR for the template ID and version
+        return (Ir *)IrCollection::message(templateId, templateVersion);
     };
 
 private:
@@ -113,7 +121,7 @@ public:
         // group started
         if (g.event() == Group::START)
         {
-            std::cout << "Group name=\"" << g.name() << "\" start (";
+            std::cout << "Group name=\"" << g.name() << "\" id=\"" << g.schemaId() << "\" start (";
             std::cout << g.iteration() << "/" << g.numInGroup() - 1 << "):" << "\n";
 
             if (g.iteration() == 1)
@@ -123,7 +131,7 @@ public:
         }
         else if (g.event() == Group::END)  // group ended
         {
-            std::cout << "Group name=\"" << g.name() << "\" end (";
+            std::cout << "Group name=\"" << g.name() << "\" id=\"" << g.schemaId() << "\" end (";
             std::cout << g.iteration() << "/" << g.numInGroup() - 1 << "):" << "\n";
 
             if (g.iteration() == g.numInGroup() - 1)
@@ -277,7 +285,20 @@ int main(int argc, char * const argv[])
     CarCallbacks carCbs(listener);
     char *buffer = NULL;
     int length = 0, ch, justHeader = 0;
+#if defined(WIN32)
+    int optind = 1;
 
+    if (strcmp(argv[optind], "-?") == 0)
+    {
+        usage(argv[0]);
+        exit(-1);
+    }
+    else if (strcmp(argv[optind], "-h") == 0)
+    {
+        justHeader++;
+        optind++;
+    }
+#else
     while ((ch = ::getopt(argc, argv, "h")) != -1)
     {
         switch (ch)
@@ -293,6 +314,7 @@ int main(int argc, char * const argv[])
         }
 
     }
+#endif /* WIN32 */
 
     // load IR from .sbeir file
     if (repo.loadFromFile(argv[optind]) < 0)
@@ -323,9 +345,11 @@ int main(int argc, char * const argv[])
     }
 
     // set up listener and kick off decoding with subscribe
-    listener.dispatchMessageByHeader(std::string("templateId"), repo.header(), &repo)
+    listener.dispatchMessageByHeader(repo.header(), &repo)
             .resetForDecode(buffer, length)
             .subscribe(&carCbs, &carCbs, &carCbs);
+
+    std::cout << "Message ends at offset " << listener.bufferOffset() << "\n";
 
     return 0;
 }

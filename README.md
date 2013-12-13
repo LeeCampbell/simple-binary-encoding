@@ -1,9 +1,14 @@
 Simple Binary Encoding (SBE)
 ============================
 
-SBE is OSI layer 6 representation for encoding and decoding application messages in binary format for low-latency applications.
+[SBE](http://www.fixtradingcommunity.org/pg/file/fplpo/read/46939/simple-binary-encoding-specification
+) is OSI layer 6 presentation for encoding and decoding application messages in binary format for low-latency applications.
 
 Further details on the background and usage of SBE can be found on the [Wiki](https://github.com/real-logic/simple-binary-encoding/wiki).
+
+Benchmark tools and information can be found [here](https://github.com/real-logic/message-codec-bench).
+
+An XSD for SBE specs can be found [here](https://github.com/real-logic/simple-binary-encoding/blob/master/main/resources/fpl/SimpleBinary1-0.xsd)
 
 License (See LICENSE file for full license)
 -------------------------------------------
@@ -26,11 +31,11 @@ Directory Layout
 
 Main source code
 
-    src/main
+    main
 
 Unit tests
 
-    src/test
+    test
 
 Examples of usage
 
@@ -54,3 +59,26 @@ Distribution
 Jars for the executable, source, and javadoc can be found in
 
     target/dist
+
+C++ Build
+---------
+
+NOTE: Linux, Mac OS, and Windows only for the moment. See [FAQ](https://github.com/real-logic/simple-binary-encoding/wiki/Frequently-Asked-Questions).
+Windows builds have been tested with Visual Studio Express 12.
+
+Dependent build:
+
+    $ ant cpp:test
+
+If you have doxygen installed:
+
+    $ ant cpp
+
+Run the C++99 examples
+
+    $ ant examples:cpp
+
+C# Build
+--------
+
+See readme.md in vs2013 directory

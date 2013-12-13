@@ -36,8 +36,8 @@ import java.io.FileInputStream;
  * <code>
  *     <pre>
  *     $ java -jar sbe.jar &lt;filename.xml&gt;
- *     $ java -jar sbe.jar -Doption=value &lt;filename.xml&gt;
- *     $ java -jar sbe.jar -Doption=value &lt;filename.sbeir&gt;
+ *     $ java -Doption=value -jar sbe.jar &lt;filename.xml&gt;
+ *     $ java -Doption=value -jar sbe.jar &lt;filename.sbeir&gt;
  *     </pre>
  * </code>
  * <p/>
@@ -87,45 +87,49 @@ public class SbeTool
      */
     public static void main(final String[] args) throws Exception
     {
-        if (args.length != 1)
+        if (args.length == 0)
         {
-            System.err.format("Usage: %s <filename>\n", SbeTool.class.getName());
+            System.err.format("Usage: %s <filenames>...\n", SbeTool.class.getName());
             System.exit(-1);
         }
 
-        final String fileName = args[0];
-        IntermediateRepresentation ir = null;
-
-        if (fileName.endsWith(".xml"))
+        for (final String fileName : args)
         {
-            ir = new IrGenerator().generate(parseSchema(fileName));
-        }
-        else if (fileName.endsWith(".sbeir"))
-        {
-            ir = new Deserializer(fileName).deserialize();
-        }
-        else
-        {
-            System.out.println("File format not supported.");
-        }
+            IntermediateRepresentation ir = null;
 
-        final boolean shouldGenerate = Boolean.parseBoolean(System.getProperty(SHOULD_GENERATE, "true"));
-        if (shouldGenerate)
-        {
-            final String outputDirName = System.getProperty(OUTPUT_DIR, ".");
-            final String targetLanguage = System.getProperty(TARGET_LANGUAGE, "Java");
+            if (fileName.endsWith(".xml"))
+            {
+                ir = new IrGenerator().generate(parseSchema(fileName));
+            }
+            else if (fileName.endsWith(".sbeir"))
+            {
+                ir = new Deserializer(fileName).deserialize();
+            }
+            else
+            {
+                System.out.println("File format not supported.");
+            }
 
-            generate(ir, outputDirName, targetLanguage);
-        }
+            final boolean shouldGenerate = Boolean.parseBoolean(System.getProperty(SHOULD_GENERATE, "true"));
+            if (shouldGenerate)
+            {
+                final String outputDirName = System.getProperty(OUTPUT_DIR, ".");
+                final String targetLanguage = System.getProperty(TARGET_LANGUAGE, "Java");
 
-        final String serializedIrFilename = System.getProperty(SERIALIZED_IR_FILENAME);
-        if (serializedIrFilename != null)
-        {
-            final String outputDirName = System.getProperty(OUTPUT_DIR, ".");
-            final File fullPath = new File(outputDirName, serializedIrFilename);
-            final Serializer serializer = new Serializer(fullPath.getAbsolutePath(), ir);
+                generate(ir, outputDirName, targetLanguage);
+            }
 
-            serializer.serialize();
+            final String serializedIrFilename = System.getProperty(SERIALIZED_IR_FILENAME);
+            if (serializedIrFilename != null)
+            {
+                final String outputDirName = System.getProperty(OUTPUT_DIR, ".");
+                final File fullPath = new File(outputDirName, serializedIrFilename);
+
+                try (final Serializer serializer = new Serializer(fullPath.getAbsolutePath(), ir))
+                {
+                    serializer.serialize();
+                }
+            }
         }
     }
 

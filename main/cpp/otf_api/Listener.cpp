@@ -44,8 +44,12 @@ using namespace sbe::on_the_fly;
 using ::std::cout;
 using ::std::endl;
 
+#if !defined(WIN32)
 const int32_t Field::INVALID_ID;
 const int Field::FIELD_INDEX;
+#else
+#define snprintf _snprintf
+#endif /* WIN32 */
 
 Listener::Listener() : onNext_(NULL), onError_(NULL), onCompleted_(NULL),
                        ir_(NULL), buffer_(NULL), bufferLen_(0), bufferOffset_(0),
@@ -55,11 +59,16 @@ Listener::Listener() : onNext_(NULL), onError_(NULL), onCompleted_(NULL),
 
 Listener &Listener::resetForDecode(const char *data, const int length)
 {
+    onNext_ = NULL;
+    onError_ = NULL;
+    onCompleted_ = NULL;
+    relativeOffsetAnchor_ = 0;
     ir_->begin();
     buffer_ = data;
     bufferLen_ = length;
     bufferOffset_ = 0;
     templateId_ = Ir::INVALID_ID;
+    templateVersion_ = -1;
     while (!stack_.empty())
     {
         stack_.pop();
@@ -89,9 +98,9 @@ int Listener::subscribe(OnNext *onNext,
         if (result != -1)
         {
             // cout << "offset " << bufferOffset_ << "/" << bufferLen_ << endl;
-            if (templateId_ != Ir::INVALID_ID)
+            if (templateId_ != Ir::INVALID_ID || templateVersion_ == -1)
             {
-                ir_ = irCallback_->irForTemplateId(templateId_);
+                ir_ = irCallback_->irForTemplateId(templateId_, templateVersion_);
                 irCallback_ = NULL;
                 if (ir_ != NULL)
                 {
@@ -100,13 +109,16 @@ int Listener::subscribe(OnNext *onNext,
                 }
                 else if (onError_ != NULL)
                 {
-                    onError_->onError(Error("no IR found for message"));
+                    char message[1024];
+
+                    ::snprintf(message, sizeof(message)-1, "no IR found for message with templateId=%lld and version=%lld", templateId_, templateVersion_);
+                    onError_->onError(Error(message));
                     result = -1;
                 }
             }
             else if (onError_ != NULL)
             {
-                onError_->onError(Error("template ID encoding name not found"));
+                onError_->onError(Error("template ID and/or version not found in header"));
                 result = -1;
             }
         }
@@ -151,6 +163,12 @@ int Listener::process(void)
                 onError_->onError(Error("buffer too short"));
             }
             return -1;
+        }
+
+        // if group is empty, then skip to END_GROUP
+        if (stack_.top().state_ == Frame::SKIP_TO_END_GROUP && ir->signal() != Ir::END_GROUP)
+        {
+            continue;
         }
 
         // overloaded method for encoding callback. 1 per primitiveType. Don't need type passed as method has typed value
@@ -389,17 +407,25 @@ void Listener::processEndComposite(void)
     {
         cachedField_.reset(); // probably saved some state in the encodings, so reset it out for the fields to follow
 
-        stack_.top().state_ = Frame::BODY_OF_GROUP;
+        if (stack_.top().numInGroup_ > 0)
+        {
+            stack_.top().state_ = Frame::BODY_OF_GROUP;
 
-        stack_.top().irPosition_ = ir_->position();
-        //cout << "save IR position " << stack_.top().irPosition_ << endl;
+            stack_.top().irPosition_ = ir_->position();
+            //cout << "save IR position " << stack_.top().irPosition_ << endl;
 
-        cachedGroup_.name(stack_.top().scopeName_)
-                    .iteration(0)
-                    .numInGroup(stack_.top().numInGroup_)
-                    .event(Group::START);
-        onNext_->onNext(cachedGroup_);
-        cachedGroup_.reset();
+            cachedGroup_.name(stack_.top().scopeName_)
+                        .schemaId(stack_.top().schemaId_)
+                        .iteration(0)
+                        .numInGroup(stack_.top().numInGroup_)
+                        .event(Group::START);
+            onNext_->onNext(cachedGroup_);
+            cachedGroup_.reset();
+        }
+        else
+        {
+            stack_.top().state_ = Frame::SKIP_TO_END_GROUP;
+        }
 
         relativeOffsetAnchor_ = bufferOffset_;
     }
@@ -496,9 +522,16 @@ uint64_t Listener::processEncoding(const Ir *ir, const uint64_t value)
 
     //printf("encoding %s %d %u\n", ir->name().c_str(), ir->primitiveType(), value);
 
-    if (irCallback_ != NULL && headerEncodingName_ == ir->name())
+    if (irCallback_ != NULL)
     {
-        templateId_ = value;
+        if ("templateId" == ir->name())
+        {
+            templateId_ = value;
+        }
+        else if ("version" == ir->name())
+        {
+            templateVersion_ = value;
+        }
     }
     else if (cachedField_.type() == Field::VAR_DATA && ir->name() == "length")
     {
@@ -544,6 +577,7 @@ void Listener::processBeginGroup(const Ir *ir)
 {
     stack_.push(Frame(ir->name().c_str()));
     stack_.top().state_ = Frame::BEGAN_GROUP;
+    stack_.top().schemaId_ = ir->schemaId();
     updateBufferOffsetFromIr(ir);
     relativeOffsetAnchor_ = bufferOffset_;
 }
@@ -551,12 +585,16 @@ void Listener::processBeginGroup(const Ir *ir)
 void Listener::processEndGroup(void)
 {
     //cout << "END_GROUP " << stack_.top().scopeName_ << endl;
-    cachedGroup_.name(stack_.top().scopeName_)
-                .iteration(stack_.top().iteration_)
-                .numInGroup(stack_.top().numInGroup_)
-                .event(Group::END);
-    onNext_->onNext(cachedGroup_);
-    cachedGroup_.reset();
+    if (stack_.top().numInGroup_ > 0)
+    {
+        cachedGroup_.name(stack_.top().scopeName_)
+                    .schemaId(stack_.top().schemaId_)
+                    .iteration(stack_.top().iteration_)
+                    .numInGroup(stack_.top().numInGroup_)
+                    .event(Group::END);
+        onNext_->onNext(cachedGroup_);
+        cachedGroup_.reset();
+    }
 
     if (++stack_.top().iteration_ < stack_.top().numInGroup_)
     {
@@ -564,6 +602,7 @@ void Listener::processEndGroup(void)
         ir_->position(stack_.top().irPosition_);  // rewind IR to first field in group
 
         cachedGroup_.name(stack_.top().scopeName_)
+                    .schemaId(stack_.top().schemaId_)
                     .iteration(stack_.top().iteration_)
                     .numInGroup(stack_.top().numInGroup_)
                     .event(Group::START);

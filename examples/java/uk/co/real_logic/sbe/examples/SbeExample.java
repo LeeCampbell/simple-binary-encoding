@@ -15,6 +15,7 @@
  */
 package uk.co.real_logic.sbe.examples;
 
+import baseline.*;
 import uk.co.real_logic.sbe.generation.java.DirectBuffer;
 
 import java.io.FileOutputStream;
@@ -61,7 +62,7 @@ public class SbeExample
         MESSAGE_HEADER.wrap(directBuffer, bufferOffset, messageTemplateVersion)
                       .blockLength(CAR.blockLength())
                       .templateId(CAR.templateId())
-                      .version((short)CAR.templateVersion());
+                      .version(CAR.templateVersion());
 
         bufferOffset += MESSAGE_HEADER.size();
         encodingLength += MESSAGE_HEADER.size();
@@ -109,7 +110,8 @@ public class SbeExample
             car.someNumbers(i, i);
         }
 
-        car.extras().cruiseControl(true)
+        car.extras().clear()
+                    .cruiseControl(true)
                     .sportsPack(true)
                     .sunRoof(false);
 

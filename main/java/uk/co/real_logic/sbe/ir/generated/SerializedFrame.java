@@ -71,13 +71,28 @@ public class SerializedFrame implements MessageFlyweight
 
     public void position(final int position)
     {
-        CodecUtil.checkPosition(position, buffer.capacity());
+        buffer.checkPosition(position);
         this.position = position;
     }
 
     public static int sbeIrVersionSchemaId()
     {
         return 1;
+    }
+
+    public static int sbeIrVersionNullVal()
+    {
+        return -2147483648;
+    }
+
+    public static int sbeIrVersionMinVal()
+    {
+        return -2147483647;
+    }
+
+    public static int sbeIrVersionMaxVal()
+    {
+        return 2147483647;
     }
 
     public int sbeIrVersion()
@@ -94,6 +109,21 @@ public class SerializedFrame implements MessageFlyweight
     public static int schemaVersionSchemaId()
     {
         return 2;
+    }
+
+    public static int schemaVersionNullVal()
+    {
+        return -2147483648;
+    }
+
+    public static int schemaVersionMinVal()
+    {
+        return -2147483647;
+    }
+
+    public static int schemaVersionMaxVal()
+    {
+        return 2147483647;
     }
 
     public int schemaVersion()

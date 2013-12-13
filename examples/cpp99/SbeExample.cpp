@@ -18,11 +18,15 @@
 
 #include <stdio.h>
 
-#include "uk_co_real_logic_sbe_examples/MessageHeader.hpp"
-#include "uk_co_real_logic_sbe_examples/Car.hpp"
+#include "baseline/MessageHeader.hpp"
+#include "baseline/Car.hpp"
 
 using namespace std;
-using namespace uk_co_real_logic_sbe_examples;
+using namespace baseline;
+
+#if defined(WIN32)
+#    define snprintf _snprintf
+#endif /* WIN32 */
 
 char VEHICLE_CODE[] = {'a', 'b', 'c', 'd', 'e', 'f'};
 char MANUFACTURER_CODE[] = {'1', '2', '3'};
@@ -144,6 +148,7 @@ const char *format(Model::Value value)
     case Model::B: return "B";
     case Model::C: return "C";
     case Model::NULL_VALUE: return "NULL";
+    default: return "unknown";
     }
 }
 

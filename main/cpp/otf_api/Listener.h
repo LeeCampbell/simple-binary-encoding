@@ -113,7 +113,7 @@ public:
     {
         ir_ = &ir;
         return *this;
-    };
+    }
 
     /**
      * \brief Reset state and initialize for decode of the given buffer.
@@ -136,20 +136,17 @@ public:
      * callback is be called when the template ID encoding is encountered. This callback must
      * return the Ir to use for the message.
      *
-     * \param encodingName of the template ID element
      * \param headerIr to use for the header
      * \param irCallback called when the encodingName element is encountered passing the template ID value
      * \return Listener
      */
-    Listener &dispatchMessageByHeader(const std::string &encodingName,
-                                      Ir &headerIr,
+    Listener &dispatchMessageByHeader(Ir &headerIr,
                                       Ir::Callback *irCallback)
     {
         ir_ = &headerIr;
-        headerEncodingName_ = encodingName;
         irCallback_ = irCallback;
         return *this;
-    };
+    }
 
     /**
      * \brief Subscribe callbacks for decoding and initiate decode
@@ -172,7 +169,7 @@ public:
     int bufferOffset(void) const
     {
         return bufferOffset_;
-    };
+    }
 
 protected:
     /*
@@ -181,17 +178,17 @@ protected:
     int deliver(const Field &field)
     {
         return ((onNext_) ? onNext_->onNext(field) : 0);
-    };
+    }
 
     int deliver(const Group &group)
     {
         return ((onNext_) ? onNext_->onNext(group) : 0);
-    };
+    }
 
     int error(const Error &error)
     {
         return ((onError_) ? onError_->onError(error) : 0);
-    };
+    }
 
     /*
      * Called once callbacks are setup and processing of the buffer should begin. This could be overridden by
@@ -252,9 +249,9 @@ private:
     /*
      * State associated with message dispatching from header
      */
-    std::string headerEncodingName_;
     Ir::Callback *irCallback_;
-    uint64_t templateId_;
+    int64_t templateId_;
+    int64_t templateVersion_;
 
     /*
      * Stack frame to hold the repeating group state
@@ -263,7 +260,7 @@ private:
     {
         enum State
         {
-            BEGAN_GROUP, DIMENSIONS, BODY_OF_GROUP, MESSAGE
+            BEGAN_GROUP, DIMENSIONS, BODY_OF_GROUP, MESSAGE, SKIP_TO_END_GROUP
         };
 
         std::string scopeName_;
@@ -272,9 +269,10 @@ private:
         int iteration_;
         int irPosition_;
         State state_;
+        int32_t schemaId_;
 
-        Frame(const std::string &name = "") : scopeName_(name), blockLength_(-1), numInGroup_(-1), iteration_(-1),
-                                              irPosition_(-1), state_(MESSAGE) {};
+        Frame(const std::string &name = "") : scopeName_(name), blockLength_(-1),
+                                              numInGroup_(-1), iteration_(-1), irPosition_(-1), state_(MESSAGE), schemaId_(Ir::INVALID_ID) {};
     };
 
     Frame messageFrame_;
